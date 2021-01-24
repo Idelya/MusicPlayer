@@ -1,7 +1,5 @@
 package com.example.musicplayer
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,32 +7,35 @@ import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.getSystemService
-import androidx.lifecycle.MutableLiveData
+import androidx.core.content.ContextCompat
+
 
 class MainActivity : AppCompatActivity(), ServiceConnection{
-    lateinit var musicList: List<AudioModel>
+    var musicList: List<AudioModel> = listOf()
     var service: PlayerServices? = null
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            checkUserPermission();
+            checkUserPermission()
+            startService()
             setContentView(R.layout.main_activity)
         }
 
-    fun startService(view: View){
-        val serviceIntent: Intent = Intent(this, PlayerServices::class.java)
-
-        serviceIntent.putExtra("Input", "Music Player")
-        startService(serviceIntent)
+    override fun onDestroy() {
+        stopService()
+        super.onDestroy()
     }
 
-    fun stopService(){
-        val serviceIntent: Intent = Intent(this, PlayerServices::class.java)
+    fun startService() {
+        val serviceIntent = Intent(this, PlayerServices::class.java)
+        ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
+    fun stopService() {
+        val serviceIntent = Intent(this, PlayerServices::class.java)
         stopService(serviceIntent)
     }
 

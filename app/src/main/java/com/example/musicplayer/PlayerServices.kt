@@ -1,21 +1,20 @@
 package com.example.musicplayer
 
-import android.app.Application
+import android.R
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
-import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.MediaPlayer
-import android.media.MediaPlayer.*
 import android.net.Uri
 import android.os.Binder
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import java.io.IOException
+
 
 val CHANNEL_ID = "notificationsChannelMusicApp"
 
@@ -35,6 +34,9 @@ class PlayerServices: Service() {
     }
 
     override fun onDestroy() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        stopForeground(true)
         super.onDestroy()
     }
 
@@ -50,14 +52,7 @@ class PlayerServices: Service() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Music player")
-            .setContentText(currentsong.value?.title)
-            .setContentIntent(pendingIntent)
-            .build()
-        startForeground(1, notification)
+        startForeground(1, setNotificationView())
         return START_NOT_STICKY
     }
 
@@ -69,6 +64,7 @@ class PlayerServices: Service() {
         mediaPlayer?.setOnCompletionListener {
                 media -> toNext()
         }
+        updateNotification()
     }
 
     fun toNext() {
@@ -81,6 +77,7 @@ class PlayerServices: Service() {
         mediaPlayer?.start()
 
         _currentsong.value = newSong
+        updateNotification()
 
     }
 
@@ -94,15 +91,33 @@ class PlayerServices: Service() {
         mediaPlayer?.start()
 
         _currentsong.value = musicList[(currentId-1)%musicList.size]
+        updateNotification()
+
     }
 
     fun setSong(audio:AudioModel) {
         _currentsong.value = audio
-
+        updateNotification()
     }
 
-    fun showNotification() {
 
+    private fun setNotificationView(): Notification {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Music player")
+            .setSmallIcon(R.drawable.ic_media_play)
+            .setContentText(currentsong.value?.title)
+            .setContentIntent(pendingIntent)
+            .build()
+        return notification
+    }
+
+    private fun updateNotification() {
+        val notification: Notification = setNotificationView();
+        val mNotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        mNotificationManager.notify(1, notification)
     }
 
 }
