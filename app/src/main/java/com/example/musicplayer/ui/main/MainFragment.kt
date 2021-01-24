@@ -20,7 +20,16 @@ class MainFragment : Fragment() {
                               savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.main_fragment, container, false) as RecyclerView
 
-        view.adapter = MusicListAdapter((this.activity as MainActivity).musicList!!)
+        if((this.activity as MainActivity).service !=null) {
+            view.adapter = (this.activity as MainActivity).service?.musicList?.let {
+                MusicListAdapter(
+                    it
+                )
+            }
+        }
+        else {
+            view.adapter = MusicListAdapter((this.activity as MainActivity).musicList)
+        }
 
         (view.adapter as MusicListAdapter).setNewListener(object : MusicListAdapter.ItemListener {
             override fun onItemClick(item: AudioModel?) {
@@ -35,11 +44,10 @@ class MainFragment : Fragment() {
     }
 
     fun setSong(item: AudioModel){
-        (this.activity as MainActivity).song = item;
+        (this.activity as MainActivity).service?.setSong(item)
     }
 
     fun openPlayer(item: AudioModel) {
-        (this.activity as MainActivity).song = item;
         NavHostFragment.findNavController(this).navigate(R.id.playerFragment)
     }
 }
